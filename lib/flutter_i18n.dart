@@ -55,16 +55,15 @@ class FlutterI18n {
   }
 
   Future<void> _loadFile(final String fileName) async {
-    try {
-      decodedMap = await rootBundle
-          .loadString('$_basePath/$fileName.json')
-          .then((jsonString) => json.decode(jsonString));
-    } on FlutterError catch (_) {
-      var yamlNode = await rootBundle
-          .loadString('$_basePath/$fileName.yaml')
-          .then((yamlString) => loadYamlNode(yamlString));
-      decodedMap = _convertYaml(yamlNode);
-    }
+    decodedMap = await rootBundle
+        .loadString('$_basePath/$fileName.json')
+        .then((jsonString) => json.decode(jsonString))
+        .catchError((e) async {
+      print('Error loading file $e.json, falling back to $fileName.yaml');
+      var jsonString = await rootBundle.loadString('$_basePath/$fileName.yaml');
+      var yamlNode = loadYamlNode(jsonString);
+      return _convertYaml(yamlNode);
+    });
   }
 
   Future<Locale> _findCurrentLocale() async {
